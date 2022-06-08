@@ -1,0 +1,7 @@
+[submodule "themes/hugo-papermod"]
+	path = themes/hugo-papermod
+	url = git@github.com:adityatelange/hugo-PaperMod.git
+[submodule "public"]
+	path = public
+	url = git@github.com:DennisXie/dennisxie.github.io.git
+	branch = master
