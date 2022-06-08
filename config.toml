@@ -1,4 +1,9 @@
-baseURL = 'http://example.org/'
+baseURL = 'https://dennisxie.github.io.org/'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
+title = "Dennis's Grocery"
 theme = "hugo-papermod"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
