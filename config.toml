@@ -7,3 +7,29 @@ theme = "hugo-papermod"
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
+
+[params]
+  env = "production"
+  title = "Software Engineering"
+  SEOTitle = "Dennis Xie Blog"
+  keyword = "Dennis, Java, Python, Cook"
+
+  # Sidebar settings
+  sidebar_about_description = "Software Developer"
+  about_me = true
+  [params.homeInfoParams]
+    Title = "Dennis Blog"
+    Content = """
+    Welcome to Dennis Blog.
+    - Sharing techs 🌟 
+    - Sharing recipes 🌟 """
+  [[params.socialIcons]]
+    name = "github"
+    url = "https://github.com/DennisXie"
+
+[[menu.main]]
+  identifier = "categories"
+  name = "Categories"
+  url = "/categories/"
+  weight = 10
+
