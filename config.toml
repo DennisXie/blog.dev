@@ -1,4 +1,4 @@
-baseURL = 'https://dennisxie.github.io.org/'
+baseURL = 'https://dennisxie.github.io/'
 languageCode = 'en-us'
 title = "Dennis's Grocery"
 theme = "hugo-papermod"
