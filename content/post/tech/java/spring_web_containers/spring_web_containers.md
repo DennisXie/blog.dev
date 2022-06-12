@@ -87,8 +87,8 @@ Embedded Server在启动的时候会运行RegistrationBean的初始化代码，�
 # 3 结论
 ## 3.1 通过Servlet容器加载Spring Web程序
 ### 3.1.1 无容器继承
-这种情况下，第二个问题答案是可以。
-1. TODO
+这种情况下，第二个问题答案都是可以。
+1. 
 2. Controller和Service都在同一个容器中，Service自然可以注入Controller。
 ### 3.1.2 有容器继承
 这种情况下，第二个问题答案是不可以。
@@ -103,3 +103,4 @@ Embedded Server在启动的时候会运行RegistrationBean的初始化代码，�
 # 4 引用
 1. [Spring Web MVC Official Doc](https://docs.spring.io/spring-framework/docs/5.3.x/reference/html/web.html#mvc-servlet)
 2. [Spring Boot Official Doc](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#web.servlet.embedded-container)
+3. [DelegatingFilterProxy](https://www.baeldung.com/spring-delegating-filter-proxy)
