@@ -2,6 +2,8 @@
 title: "Spring Web容器创建及管理"
 date: 2022-06-08T21:49:58+08:00
 draft: false
+tags: ["java", "tech"]
+categories: ["tech"]
 ---
 # 1 背景
 ## 1.1 问题

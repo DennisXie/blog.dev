@@ -8,6 +8,40 @@ theme = "hugo-papermod"
     [markup.goldmark.renderer]
       unsafe = true
 
+[languages]
+  [languages.en]
+    languageName = "English"
+    weight = 1
+    [[languages.en.menu.main]]
+      name = "Tech"
+      url = "/categories/tech/"
+      weight = 10
+    [[languages.en.menu.main]]
+      name = "Cook"
+      url = "/categories/cook/"
+      weight = 20
+    [[languages.en.menu.main]]
+      name = "Other"
+      url = "/categories/other/"
+      weight = 30
+  [languages.zh]
+    languageName = "Chinese"
+    weight = 2
+    [[languages.zh.menu.main]]
+      name = "技术"
+      url = "/zh/categories/tech/"
+      weight = 10
+    [[languages.zh.menu.main]]
+      name = "美食"
+      url = "/zh/categories/recipe/"
+      weight = 20
+    [[languages.zh.menu.main]]
+      name = "其他"
+      url = "/zh/categories/other/"
+      weight = 30
+
+
+
 [params]
   env = "production"
   title = "Software Engineering"
@@ -17,19 +51,16 @@ theme = "hugo-papermod"
   # Sidebar settings
   sidebar_about_description = "Software Developer"
   about_me = true
+  ShowBreadCrumbs = true
+  [params.assets]
+    favicon = "/images/favicon.ico"
   [params.homeInfoParams]
     Title = "Dennis Blog"
     Content = """
-    Welcome to Dennis Blog.
+    Welcome to Dennis's Grocery!!!
     - Sharing techs 🌟 
-    - Sharing recipes 🌟 """
+    - Sharing recipes 🌟
+    - Sharing happy times 🌟"""
   [[params.socialIcons]]
     name = "github"
     url = "https://github.com/DennisXie"
-
-[[menu.main]]
-  identifier = "categories"
-  name = "Categories"
-  url = "/categories/"
-  weight = 10
-
