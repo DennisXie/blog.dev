@@ -52,6 +52,7 @@ theme = "hugo-papermod"
   sidebar_about_description = "Software Developer"
   about_me = true
   ShowBreadCrumbs = true
+  comments = true
   [params.assets]
     favicon = "/images/favicon.ico"
   [params.homeInfoParams]
