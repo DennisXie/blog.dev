@@ -4,6 +4,7 @@ date: 2022-06-09T12:39:44+08:00
 draft: false
 tags: ["problem"]
 categories: ["tech"]
+postid: "79e11d850712bf7a59871ec6072b0c2aef0c4db7"
 ---
 ## The problem of integrity
 When you maintain your Hugo project both on Windows and Linux/macOS, you may get this error. 

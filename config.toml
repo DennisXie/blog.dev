@@ -53,6 +53,8 @@ theme = "hugo-papermod"
   about_me = true
   ShowBreadCrumbs = true
   comments = true
+  hyvor = true
+  disqus = false
   [params.assets]
     favicon = "/images/favicon.ico"
   [params.homeInfoParams]
