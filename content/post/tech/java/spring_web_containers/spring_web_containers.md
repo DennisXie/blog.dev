@@ -10,7 +10,7 @@ draft: false
 1. Spring Web程序中, Filter对象能不能使用Spring容器中的Bean？
 2. Spring Web程序中, 能不能给Service Bean注入Controller Bean?
 
-### 1.2.2 问题2
+### 1.2 问题拆解
 这个问题需要分情况
 
 1. 通过Spring Boot加载的Spring Web程序
