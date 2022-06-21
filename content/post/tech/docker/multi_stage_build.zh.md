@@ -3,7 +3,7 @@ author: "Dennis Xie"
 title: "Docker多阶段构建"
 date: 2022-06-21T16:38:22+08:00
 description: ""
-draft: true
+draft: false
 tags: ["docker"]
 categories: ["tech"]
 postid: "849a0935917b12a0dce7be17c44c470d0e749817"

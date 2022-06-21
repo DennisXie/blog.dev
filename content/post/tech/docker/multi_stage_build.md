@@ -3,7 +3,7 @@ author: "Dennis Xie"
 title: "Multi-Stage Builds of Docker"
 date: 2022-06-21T16:32:52+08:00
 description: ""
-draft: true
+draft: false
 tags: ["docker"]
 categories: ["tech"]
 postid: "82dfdefba4df3346024c94216677faadb9f7dee7"
