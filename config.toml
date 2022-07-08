@@ -7,6 +7,9 @@ theme = "hugo-papermod"
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
+  [markup.highlight]
+    linenos = true
+    linenostart = 1
 
 [languages]
   [languages.en]
