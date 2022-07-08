@@ -8,8 +8,6 @@ tags: ["python"]
 categories: ["tech"]
 postid: "7fa8acd353713dd9afc254459d49a009211f7063"
 ---
-# Python Bindings
-
 # Background
 
 ## Foreign function interface
