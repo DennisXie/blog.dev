@@ -14,7 +14,7 @@ postid: "7fa8acd353713dd9afc254459d49a009211f7063"
 
 As we know, many operating systems only provide C API for system calls.  This statement is not quite correct, but we assume this is right because we usually interact with operating systems via C API directly or indirectly. Have you ever thought about that why non-C language can interact with operating systems? Before we discuss this question, we need to know some knowledge of foreign function interface (FFI). 
 
-The term FFI refers to the language features for inter-language calls. Some of the non-C languages interact with operating systems via FFI. Many languages refer their FFI as ‘language bindings’, such as Python bindings. Some languages have their own terminology, such as Java’s JNI.
+The term FFI refers to the language features for inter-language calls. Some of the non-C languages interact with operating systems via FFI. Many languages refer their FFI as ‘language bindings’, such as Python bindings. Some languages have their own terminology, such as Java’s JNI. With the ability of FFI, languages like Python can easily make system calls.
 
 ## Python bindings
 
