@@ -31,7 +31,7 @@ We can also choose to use some 3rd-party tools and libraries to make our life ea
 
 ## Introduction
 
-Cython is a programming language that makes writing C extensions for the Python language as easy as Python itself. It has a compiler that can compile Python and Cython to C. Cython is a powerful tool that can provide you a deep level of control when creating Python bindings for C and C++. It can let you write Python-esque code that manually controls the GIL. It can also let you use standard C/C++ library. You can easily install Cython with the following command.
+Cython is a programming language that makes writing C extensions for the Python language as easy as Python itself and has a compiler that can compile Python and Cython to C. Cython can let you write Python-esque code that manually controls the GIL as Cython is compatible with Python and can be compiled to C. It is also very convinient to use C/C++ library in Cython. You can easily install Cython with the following command.
 
 ```bash
 pip install Cython
@@ -80,7 +80,7 @@ Hello Cython
 
 ### Using static types
 
-In Cython, we can use static type to improve the performance in some cases. We can use cdef to declare static types. We can declare not only basic types of C but also struct, union, enum and their pointer types.
+In Cython, we can use static type to improve the performance in some cases. We can use cdef to declare static types. In addition, we can declare not only basic types of C but also struct, union, enum and their pointer types.
 
 ```python
 def fibo(n):
@@ -108,8 +108,8 @@ There are three ways to define a function in Cython. We can use def, cdef, and c
 
 | statement | Python objects param/return | C variable param/return | Called from python |
 | :-: | :-: | :-: | :-: |
-| def |   √ |   √ |  ×  |
-| cdef |  √ |   √ |  √  |
+| def |   √ |   × |  √  |
+| cdef |  √ |   √ |  ×  |
 | cpdef | √ |   √ |  √  |
 
 The following code block shows the usage of these statements. When you need to call a C function from Python, you can use def or cpdef to write a wrapper function to call that C function.
@@ -188,16 +188,19 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 ## Build with C code
 
-### The C code
+In this example, we will implement two functions in C. The function called *fibo* calculates the Nth Fibonacci number. The other function called *calcDistance* calculates the distance of two points.
 
-In this example, we will implement two functions in C. The function called *fibo* calculates the Nth Fibonacci number. The other function called *calcDistance* calculates the distance of two points. The point and distance are defined in the header file *foolib.h* and the two functions are implemented in the source file *foolib.c*. Here is the header file and source file of the foolib.
+### The C code
+The point and distance are defined in the header file *foolib.h* and the two functions are implemented in the source file *foolib.c*.
+
+Here is the header file and source file of the foolib.
 
 ```c
 // foolib.h
 #ifndef __FOOLIB_H
 #define __FOOLIB_H
 typedef struct _Point {
-	  char name[50];    // Define a char array for name instead of char* to avoid memory management.
+	char name[50];    // Define a char array for name instead of char* to avoid memory management.
     int x;
     int y;
 } Point;
@@ -301,7 +304,7 @@ cdef class PyPoint:
     cdef public int y
 
     def __init__(self, str name, int x, int y):
-				# We need to encode the string into byte array.
+		# We need to encode the string into byte array.
         self.name = name.encode("utf-8")
         self.x = x
         self.y = y
@@ -334,7 +337,7 @@ def pyFibo(n):
 		return fibo(n)
 
 cpdef PyDistance pyCalcDistance(PyPoint a, PyPoint b):
-		# Transfer the python class to c struct.
+	# Transfer the python class to c struct.
     cdef pfoolib.Point cpa = a.toCPoint()
     cdef pfoolib.Point cpb = b.toCPoint()
     cdef pfoolib.Distance dis = pfoolib.calcDistance(cpa, cpb)
@@ -391,7 +394,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 ### The makefile
 
-We can write a simple Makefile to avoid typing the long shell command. The following file is the makefile.
+We can write a simple Makefile to avoid typing the long shell command. The following code block shows the content of the makefile.
 
 ```makefile
 # Makefile
@@ -459,7 +462,7 @@ The following code blocks show the pxd file and pyx file.
 ```python
 # pfoolib.pxd
 cdef extern from "foolib.h":
-		int filter(int [], int, predicate, void*)
+	int filter(int [], int, predicate, void*)
 ```
 
 ```python
