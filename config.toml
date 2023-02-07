@@ -50,6 +50,7 @@ theme = "hugo-papermod"
   title = "Software Engineering"
   SEOTitle = "Dennis Xie Blog"
   keyword = "Dennis, Java, Python, Cook"
+  ShowShareButtons = true
 
   # Sidebar settings
   sidebar_about_description = "Software Developer"
