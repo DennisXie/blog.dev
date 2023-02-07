@@ -3,7 +3,7 @@ author: "Author Nathaniel J. Smith, translated by Dennis"
 title: "Timeouts and Cancellations for Humans"
 date: 2023-02-07T15:39:59+08:00
 description: "作者介绍了目前的一些超时和取消的方案，提出了自己的取消域的方案，并介绍了一下自己的Trio库。"
-draft: true
+draft: false 
 tags: ["python", "async programming", "timeouts", "I/O", "asyncio"]
 categories: ["tech"]
 postid: "9772a5f52a6a2f06d7c1ddd40f877d2cb51ca113"
