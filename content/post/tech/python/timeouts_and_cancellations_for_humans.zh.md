@@ -1,12 +1,12 @@
 ---
-author: ""
+author: "Author Nathaniel J. Smith, translated by Dennis"
 title: "Timeouts and Cancellations for Humans"
-date: 2023-02-07T15:08:24+08:00
-description: "超时和取消"
+date: 2023-02-07T15:39:59+08:00
+description: "作者介绍了目前的一些超时和取消的方案，提出了自己的取消域的方案，并介绍了一下自己的Trio库。"
 draft: true
-tags: ["python", "timeouts", "async programming"]
+tags: ["python", "async programming", "timeouts", "I/O", "asyncio"]
 categories: ["tech"]
-postid: "089d34ec1cea5317ce3158730d8fc243b0698061"
+postid: "9772a5f52a6a2f06d7c1ddd40f877d2cb51ca113"
 ---
 # 说明：
 
@@ -21,7 +21,7 @@ postid: "089d34ec1cea5317ce3158730d8fc243b0698061"
     - deadline: 大家很习惯且考虑到翻译成截止时间比较啰嗦就不做翻译了。
     - shield: 没有想好如何翻译，就没有做翻译。
     - nursery: Trio中的一个启动子任务的系统，翻译成托儿所有点傻，就未做翻译。
-- 其他翻译：见[翻译说明](https://www.notion.so/5c41fc1933104aa7bd57ce4dc51395df)
+- 其他翻译：见[翻译说明](#翻译说明)
 - 本文评论使用的是disqus
 
 # 引言
@@ -36,11 +36,30 @@ postid: "089d34ec1cea5317ce3158730d8fc243b0698061"
 
 说实话，如果你也像大多数开发者一样，那么你的代码可能会有很多因为缺失超时导致的bug，我的代码也是这样的。因为正确进行I/O操作非常常见且重要，你可能觉得任何一种编程环境都能为所有操作提供简单而健壮的设置超时的方法。但奇怪的是，事实并不如此。大多数带超时的API都非常单调且容易出错，以至于要求开发人员把这些弄对是不切实际的。所以别难过，你的代码有这些超时相关的bug并不是你的错，而是那些I/O库的错！
 
-我目前正在写一个[I/O库](https://trio.readthedocs.io/en/stable/)(Trio)。和其他任何I/O库都不一样，这个I/O库的所有卖点是它痴迷于简单易用。我想让你能够在使用Trio时，能够简单而又正确地对任意I/O操作应用超时。但是，用户友好的超时API是一件很棘手的事。所以我会在这篇博客中深入讨论各种可能的设计，特别是那些给我提供灵感的设计。接下来我会介绍我想到的设计，以及为什么我会认为该设计是古老的”状态艺术”的一个切实优化。最后，我将会讨论为什么Trio库的思路为适应面更广，同时我将会给出一个不错的同步Python的原型实现。
+我目前正在写一个[I/O库](https://trio.readthedocs.io/en/stable/)。和其他任何I/O库都不一样，这个I/O库的所有卖点是它痴迷于简单易用。我想让你能够在使用Trio时，能够简单而又正确地对任意I/O操作应用超时。但是，用户友好的超时API是一件很棘手的事。所以我会在这篇博客中深入讨论各种可能的设计，特别是那些给我提供灵感的设计。接下来我会介绍我想到的设计，以及为什么我会认为该设计是古老的”状态艺术”的一个切实优化。最后，我将会讨论为什么Trio库的思路为适应面更广，同时我将会给出一个不错的同步Python的原型实现。
 
 那么超时处理有什么难的呢？
 
 # 目录:
+- [简单的超时机制不支持抽象](#简单的超时机制不支持抽象)
+- [绝对的deadline是可组合的(但是用起来很麻烦)](#绝对的deadline是可组合的但是用起来很麻烦)
+- [取消令牌(Cancel tokens)](#取消令牌cancel-tokens)
+  - [取消令牌封装了取消状态](#取消令牌封装了取消状态)
+  - [取消令牌属于水平触发，可以根据你程序的需要来确定范围](#取消令牌属于水平触发可以根据你程序的需要来确定范围)
+  - [实际上因为人类的懒惰取消令牌并不可靠](#实际上因为人类的懒惰取消令牌并不可靠)
+- [取消域: Trio关于超时和取消的人性化方案](#取消域-trio关于超时和取消的人性化方案)
+  - [取消域(Cancel scope)是如何工作的](#取消域cancel-scope是如何工作的)
+  - [我们需要在哪些地方检查取消？](#我们需要在哪些地方检查取消)
+  - [一个逃逸口(escape hatch)](#一个逃逸口escape-hatch)
+  - [取消域与并发](#取消域与并发)
+  - [小结](#小结)
+- [还有哪些地方可以从取消域中受益？](#还有哪些地方可以从取消域中受益)
+  - [同步、单线程Python](#同步单线程python)
+  - [asyncio](#asyncio)
+  - [其他语言](#其他语言)
+- [现在去修复你的超时bug！](#现在去修复你的超时bug)
+- [注释](#注释)
+- [翻译说明](#翻译说明)
 
 # 简单的超时机制不支持抽象
 
@@ -68,7 +87,7 @@ sock.recv(...)
 
 这种方式比每次显式的传递timeout参数要更加方便一些(后面我们将会讨论这种方式的问题)，但重要的是要知道这只是换汤不换药罢了。在语义上和我们看到的threading.Lock是一样的：每次函数调用都会有自己的10秒超时。
 
-这会有什么问题呢？目前一切看起来都足够直观。如果我们总是写一些直接操作这些底层API的代码，那么可能也足够高效。但是，编程是需要抽象的。假设我们想要从[S3](https://en.wikipedia.org/wiki/Amazon_S3)拉取一个文件，我们可能会使用boto3的[S3.Client.get_object](https://botocore.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.get_object)方法。S3.Client.get_object会做一些什么操作呢？它通过调用[requests](https://requests.readthedocs.io/en/latest/)库的方法发送一系列的HTTP请求到S3服务器。每次调用requests库的方法内部又会调用一系列的socket模块的方法来进行实际的网络通信[1]。
+这会有什么问题呢？目前一切看起来都足够直观。如果我们总是写一些直接操作这些底层API的代码，那么可能也足够高效。但是，编程是需要抽象的。假设我们想要从[S3](https://en.wikipedia.org/wiki/Amazon_S3)拉取一个文件，我们可能会使用boto3的[S3.Client.get_object](https://botocore.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.get_object)方法。S3.Client.get_object会做一些什么操作呢？它通过调用[requests](https://requests.readthedocs.io/en/latest/)库的方法发送一系列的HTTP请求到S3服务器。每次调用requests库的方法内部又会调用一系列的socket模块的方法来进行实际的网络通信[[1]](#注释)。
 
 从用户的角度看，从远程服务拉取文件使用了3个不同的API：
 
@@ -225,7 +244,7 @@ except Interrupted:
 
 这里并不是因为并发而使用线程。这仅仅是为了让你限制取消的范围而使用的一种撇足的方式。
 
-另外，如果你有一堆复杂工作需要取消。比如，某些内部启动了大量工作线程的情况？在前面的例子中，如果requests.get创建了一些额外的后台线程，当我们取消了第一个线程，他们可能会被挂起。正确处理这个问题需要一些复杂而精细的簿记（代码）。
+另外，如果你有一堆复杂工作需要取消。比如，某些内部启动了大量工作线程的情况？在前面的例子中，如果requests.get创建了一些额外的后台线程，当我们取消了第一个线程，他们可能会被挂起。正确处理这个问题需要一些复杂而精细的簿记(代码)。
 
 取消令牌就可以解决这些问题：取消令牌可以取消”任何传入了令牌的东西”。这些东西可以是一个函数、一个复杂的多层次线程池、或者任何他们两者之间的东西。
 
@@ -233,7 +252,7 @@ except Interrupted:
 
 这挺微妙，但是这让取消令牌更不容易出错。一种会这样想的原因是[边缘触发和水平触发的区别](https://lwn.net/Articles/25137/)：线程中断API为取消提供了边缘触发的通知，相对的取消令牌提供了水平触发。边缘触发API使用起来是出了名的棘手。你可以在Python的[threading.Event](https://docs.python.org/3/library/threading.html#threading.Event)看到这么一个例子：虽然threading.Event被叫做”事件”，实际上其内部有一个布尔状态，使用取消令牌进行取消就像设置这么一个事件。
 
-这样讲其实很抽象，我们让它更加具体一点。考虑一个确保连接正常关闭的使用try/finally的常见模式。有这么一个例子，一个函数创建一个WebSocket连接，发送消息，然后关闭该连接，不管send_message是否会抛出异常[2]：
+这样讲其实很抽象，我们让它更加具体一点。考虑一个确保连接正常关闭的使用try/finally的常见模式。有这么一个例子，一个函数创建一个WebSocket连接，发送消息，然后关闭该连接，不管send_message是否会抛出异常[[2]](#注释)：
 
 ```python
 def send_websocket_messages(url, messages):
@@ -271,9 +290,9 @@ def send_websocket_messages(url, messages, cancel_token):
 
 人类讨厌这样的模板。我的意思是，不包括你，我相信你是个会确保每一个函数都正确支持取消并且flossess every day(这句真的不知道怎么翻译了-_-!)的勤奋程序员。但是可能你的一些同事并不勤奋？或者你可能需要依赖一些其他人写的库？你有多相信第三方库会正确运作？随着调用栈的增长，每个人的每部分代码都正确运作的概率会趋近于零。
 
-我能举几个真实的例子来支持前面的论点吗？Emmm，在C#和Go这两个最出名的提供并且一直提倡使用取消令牌的语言中，其底层网络原语仍然没有提供取消令牌的支持**[3]**。这就像…底层操作会因为某些你无法控制的原因挂起，你需要准备好超时和取消。但是…我猜他们只是还没有开始实现这项功能。或者，他们的socket层只支持那种老式的在socket对象上设置[timeout](https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.receivetimeout?redirectedfrom=MSDN&view=net-7.0#System_Net_Sockets_Socket_ReceiveTimeout)和[deadline](https://pkg.go.dev/net#IPConn.SetDeadline)的机制。如果你想使用取消令牌(或者说context，Go的说法)，那么你得自己弄清楚如何桥接这两种系统。
+我能举几个真实的例子来支持前面的论点吗？Emmm，在C#和Go这两个最出名的提供并且一直提倡使用取消令牌的语言中，其底层网络原语仍然没有提供取消令牌的支持[[3]](#注释)。这就像…底层操作会因为某些你无法控制的原因挂起，你需要准备好超时和取消。但是…我猜他们只是还没有开始实现这项功能。或者，他们的socket层只支持那种老式的在socket对象上设置[timeout](https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.receivetimeout?redirectedfrom=MSDN&view=net-7.0#System_Net_Sockets_Socket_ReceiveTimeout)和[deadline](https://pkg.go.dev/net#IPConn.SetDeadline)的机制。如果你想使用取消令牌(或者说context，Go的说法)，那么你得自己弄清楚如何桥接这两种系统。
 
-Go标准库确实给出了一个该怎样做的例子：他们建立网络连接（和Python的socket.connect差不多）的函数确实支持接受一个取消令牌。实现这个函数用了[40行代码](https://github.com/golang/go/blob/bf0f69220255941196c684f235727fd6dc747b5c/src/net/fd_unix.go#L99-L141)和一个后台任务。第一版代码还有个[花了一年时间才在生产环境中找出来的竞争条件](https://github.com/golang/go/issues/16523)。
+Go标准库确实给出了一个该怎样做的例子：他们建立网络连接(和Python的socket.connect差不多)的函数确实支持接受一个取消令牌。实现这个函数用了[40行代码](https://github.com/golang/go/blob/bf0f69220255941196c684f235727fd6dc747b5c/src/net/fd_unix.go#L99-L141)和一个后台任务。第一版代码还有个[花了一年时间才在生产环境中找出来的竞争条件](https://github.com/golang/go/issues/16523)。
 
 我不是想开玩笑。这玩意儿很难。但C#和Go是由专业的全职开发者组成的团队在维护和财富50强公司支持的巨型项目。如果他们都不能搞定，谁能？不是我，我只是一个尝试重新实现Python I/O的凡人。我不能承受把事情搞的如此复杂。
 
@@ -300,7 +319,7 @@ with trio.move_on_after(10):
     await requests.get("https://...")
 ```
 
-但由于这篇文章是关于底层设计的，我们将会集中精力在原语(设计)上。(致谢：使用with块来实现超时这个想法是我第一次看Dave Beazley的Curio库时发现的，虽然我改了很多。我把相关细节放在了脚注[4]中。)
+但由于这篇文章是关于底层设计的，我们将会集中精力在原语(设计)上。(致谢：使用with块来实现超时这个想法是我第一次看Dave Beazley的Curio库时发现的，虽然我改了很多。我把相关细节放在了脚注[[4]](#注释)中。)
 
 你应该将with open_cancel_scope()视为创建了一个取消令牌，但是实际上它并没有对外暴露任何CancelToken对象。相反的，取消令牌被压入了一个不可见的内部栈中，并自动应用到with语句块中调用的所有阻塞操作中。这样requests就不需要透传任何东西，当它最终向网络发送或者从网络接收数据时，那些原语调用会自动应用deadline。
 
@@ -346,7 +365,8 @@ with trio.move_on_after(10):
         await trio.sleep(20)
 ```
 
-为了支持组合，shielding对于取消域栈来说非常敏感：它只阻止外部的取消域不被应用，不会对内部的取消域生效。在我们上面的例子中，我们的shield不会对trio.sleep中可能用到的任何取消域有任何影响，这些取消域仍然会正常工作。这样很好，因为无论如何trio.sleep内部怎么做是其自身的实现细节。而且事实上，trio.sleep确实在内部[使用了一个取消域](https://github.com/python-trio/trio/blob/07d144e701ae8ad46d393f6ca1d1294ea8fc2012/trio/_timeouts.py#L65-L66)！
+为了支持组合，shielding对于取消域栈来说非常敏感：它只阻止外部的取消域不被应用，不会对内部的取消域生效。在我们上面的例子中，我们的shield不会对trio.sleep中可能用到的任何取消域有任何影响，这些取消域仍然会正常工作。这样很好，因为无论如何trio.sleep内部怎么做是其自身的实现细节。而且事实上，trio.sleep确实在内部[使用了一个取消域](https://github.com/python-trio/trio/blob/07d144e701ae8ad46d393f6ca1d1294ea8fc2012/trio/_timeouts.py#L65-L66)!
+[[5]](#注释)
 
 shield是取消域的属性而不是专门的”shield域“的一个原因是这样实现这种嵌套会比较方便，因为我们可以重用取消域线程的栈结构。另外一个原因是，任何一个你禁用外部超时的地方，你都需要想想你要怎么做以确保程序不会永远挂起，而且有个取消域在那里可以很容易的应用一个新的在当前代码控制下的超时：
 
@@ -469,4 +489,6 @@ async def do_the_thing():
 
 - innocent: 原意为无辜、无知，但是感觉用起来有点奇怪，就翻译成了没问题。
 - impedance mismatch: 原文中为impedence mismatch，可能是个typo。原意为阻抗不匹配，翻译时只保留了不匹配。
+
+
 

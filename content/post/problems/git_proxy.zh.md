@@ -31,7 +31,7 @@ git config --global http.proxy http://proxyUsername:proxyPassword@proxy.server.c
 ## ssh协议
 使用ssh协议的仓库链接一般为 _git@github.com:gituser/repository.git_。这里User为git，Host为github.com。因为使用了ssh协议，配置一下ssh的代理即可。首先打开或者创建 _~/.ssh/config_ 文件。以Github为例，填入以下内容:
 ~~~
-Host github.com
+Host *.github.com
     User git
     ProxyCommand nc -v -x {proxy.server.com or ip}:{port} %h %p
 ~~~
